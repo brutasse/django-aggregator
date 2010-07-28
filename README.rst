@@ -4,6 +4,11 @@ Django-aggregator
 A planet app for your Django project. It crawls a set of feeds, aggregates
 them on a single page and re-publishes the entries with RSS and Atom feeds.
 
+This app is based on `Django's community aggregator`_, updated to Django 1.2
+and slightly improved.
+
+.. _Django's community aggregator: http://www.djangoproject.com/community/
+
 Installation
 ------------
 
@@ -76,6 +81,8 @@ class::
 
 You can have Atom feeds::
 
+    from django.utils.feedgenerator import Atom1Feed
+
     class MyAwesomeAtomFeed(MyAwesomeFeed):
         feed_type = Atom1Feed
         subtitle = MyAwesomeFeed.description
@@ -87,10 +94,37 @@ And add them to your URLs::
     urlpatterns = patterns('',
         # ...
         url(r'^path/to/feeds/rss/$', MyAwesomeFeed(), name='aggregator_rss'),
-
         url(r'^path/to/feeds/atom/$', MyAwesomeAtomFeed(), name='aggregator_atom'),
         # ...
     )
 
 When you're done you can add your feeds' URLs in the ``<head>`` section of
 your website.
+
+Usage
+-----
+
+Adding some feeds
+`````````````````
+
+Go to the admin and add the different feeds' name, title & URLs.
+
+Updating the feeds
+``````````````````
+
+There are two management commands:
+
+* ``mark_defunct_feeds`` will fetch all the registered feeds and check if they
+  return a 404 or 500 response. If so, they are marked as "defunct" and will
+  be skipped at each update.
+
+* ``update_feeds`` fetches all the non-defunct feeds and checks for new
+  content.
+
+Here is how you could configure cron to schedule these two tasks::
+
+    PYTHONPATH=/path/to/project
+    DJANGO_SETTINGS_MODULE=settings_module
+
+    15,45 * * * * python /path/to/manage.py update_feeds
+    0 */6 * * *   python /path/to/manage.py mark_defunct_feeds
